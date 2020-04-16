@@ -2,15 +2,16 @@ import csv
 from random import choices
 from uszipcode import SearchEngine
 import xlrd 
-from math import radians, cos, sin, asin, sqrt
+from math import radians, cos, sin, asin, sqrt, floor
 
 # Set up file locations
 applicant_data = "applicant.csv"
 housing_data = "housing.csv"
+housing_distribution_data = "housing_distribution.csv"
 zipcode_file = "17zp21md.xlsx"
 
-num_applicants = 56268
-num_houses = 29268
+num_applicants = 5626
+num_houses = 2926
 
 used_zipcodes = []
 
@@ -83,6 +84,17 @@ def generate_housing_data():
         housing_zipcode_distribution.update({zipcode : avail_houses})
         avail_housing_sum += avail_houses
 
+    # Write Housing Distribution to file
+    with open(housing_distribution_data, 'w', newline='') as housingfile:
+        housingwriter = csv.writer(housingfile, delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
+        housingwriter.writerow(['Zip Code','# Houses'])
+
+        for key,value in housing_zipcode_distribution.items():
+
+            housingwriter.writerow([key,floor(value / avail_housing_sum * num_houses)])
+
+            housingfile.flush()
+
     # Convert housing zipcode distribution to weights
     for key, value in housing_zipcode_distribution.items():
         housing_zipcode_distribution.update({key : value / avail_housing_sum * 100})
@@ -108,6 +120,7 @@ def generate_housing_data():
             housingwriter.writerow([i+1,percent_return(disability_friendly_distribution),percent_return(public_section_8_distribution),selected_zipcode, population,housing_units,occupied_housing_units,median_household_income,median_home_value])
 
             housingfile.flush()
+
 
 def create_adjacency_matrix():
     global used_zipcodes
