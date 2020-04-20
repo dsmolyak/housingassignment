@@ -26,8 +26,8 @@ def generate_applicant_data():
     global used_zipcodes
 
     # Applicant Distributions
-    race_distribution = {"Black" : 45, "Hispanic" : 21, "White" : 32, "Other" : 2}
-    disability_distribution = {"Yes" : 20, "No" : 80}
+    race_distribution = {"Black" : 37.04, "Hispanic" : 15.69, "White" : 43.28, "Other" : 3.55}
+    disability_distribution = {"Yes" : 12.8, "No" : 87.2}
     population_distribution = {}
 
     search = SearchEngine(simple_zipcode=True)
@@ -70,7 +70,7 @@ def generate_housing_data():
     global used_zipcodes
 
     # Housing Distributions
-    disability_friendly_distribution = {"Yes" : 5, "No" : 95}
+    disability_friendly_distribution = {"Yes" : 3.88, "No" : 96.12}
     public_section_8_distribution = {"Public Housing" : 9851, "Section 8" : 19417}
     housing_zipcode_distribution = {}
 
