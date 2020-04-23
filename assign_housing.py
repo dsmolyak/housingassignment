@@ -1,6 +1,6 @@
 import pandas as pd
-import random
 import time
+from ortools.linear_solver import pywraplp
 
 
 def compile_stats(applicant_df, housing_df, total_assignments, race_assignments, disability_assignments):
@@ -15,7 +15,7 @@ def compile_stats(applicant_df, housing_df, total_assignments, race_assignments,
     print(disability_assignments)
 
 
-def assign_slow(race_dist, applicant_df, housing_df):
+def assign_random(race_dist, applicant_df, housing_df):
     start = time.time()
     zips = set(housing_df['Zip Code'])
     race_limit_map = {} # find restrictions on how many of each race can be in a zip (proxy for block for now)
@@ -54,9 +54,75 @@ def assign_slow(race_dist, applicant_df, housing_df):
     compile_stats(applicant_df, housing_df, total_assignments, race_assignments, disability_assignments)
 
 
+def assign_optimal(race_dist, applicant_df, housing_df):
+    zips = list(set(housing_df['Zip Code']))
+    race_limit_map = {}  # find restrictions on how many of each race can be in a zip (proxy for block for now)
+    for zip in zips:
+        race_limit_map[zip] = {}
+        for race, percent in race_dist.items():
+            race_limit_map[zip][race] = percent / 100 * len(housing_df[housing_df['Zip Code'] == zip])
+
+    disability_limit_map = {}  # find restrictions on how many people with disabilities can be in a zip
+    for zip in zips:
+        disability_limit_map[zip] = len(housing_df[(housing_df['Zip Code'] == zip) &
+                                                   (housing_df['Disability Friendly'] == 'Yes')])
+
+    solver = pywraplp.Solver('mip_program', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
+    x = {}
+    for i in range(0, len(applicant_df)):
+        x[i] = {}
+        for j in range(0, len(zips)):
+            x[i][j] = solver.IntVar(0, 1, 'x[%d][%d]' % (i, j))
+
+    # Constraints on one to one matching
+    for j in range(0, len(zips)):
+        constraint = solver.RowConstraint(0, len(housing_df[housing_df['Zip Code'] == zips[j]]), '')
+        for i in range(0, len(applicant_df)):
+            constraint.SetCoefficient(x[i][j], 1)
+    for i in range(0, len(applicant_df)):
+        constraint = solver.RowConstraint(0, 1, '')
+        for j in range(0, len(zips)):
+            constraint.SetCoefficient(x[i][j], 1)
+
+    # Constraints on race
+    race_indices = {}
+    for index, row in applicant_df.iterrows():
+        if row['Race'] not in race_indices:
+            race_indices[row['Race']] = []
+        race_indices[row['Race']].append(index)  # Find which indices correspond to each race
+    for j in range(0, len(zips)):
+        for race, limit in race_limit_map[zips[j]].items():
+            constraint = solver.RowConstraint(0, int(limit), '')
+            for i in range(0, len(applicant_df)):
+                if i in race_indices[race]:
+                    constraint.SetCoefficient(x[i][j], 1)  # Only include indices corresponding to current race
+                else:
+                    constraint.SetCoefficient(x[i][j], 0)
+
+    # Set objective (create utility matrix)
+    objective = solver.Objective()
+    for i in range(0, len(applicant_df)):
+        for j in range(0, len(zips)):
+            objective.SetCoefficient(x[i][j], 1)
+
+    status = solver.Solve()
+
+    if status == pywraplp.Solver.OPTIMAL:
+        print('Problem solved in %f milliseconds' % solver.wall_time())
+        print()
+        total_count = 0
+        for i, row in applicant_df.iterrows():
+            for j in range(0, len(zips)):
+                if int(x[i][j].solution_value()) == 1:
+                    total_count += 1
+        print(total_count, len(housing_df), total_count / len(housing_df))
+    else:
+        print('oop.')
+
+
 if __name__ == '__main__':
     applicant_df = pd.read_csv('applicant.csv')
     housing_df = pd.read_csv('housing.csv')
-    race_distribution = {"Black": 45, "Hispanic": 21, "White": 32, "Other": 2}
+    race_distribution = {"Black": 37.04, "Hispanic": 15.69, "White": 43.28, "Other": 3.55}
 
-    assign(race_distribution, applicant_df, housing_df)
+    assign_optimal(race_distribution, applicant_df, housing_df)
