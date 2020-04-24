@@ -68,11 +68,12 @@ def assign_optimal(race_dist, applicant_df, housing_df):
                                                    (housing_df['Disability Friendly'] == 'Yes')])
 
     solver = pywraplp.Solver('mip_program', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
+    infinity = solver.infinity()
     x = {}
     for i in range(0, len(applicant_df)):
         x[i] = {}
         for j in range(0, len(zips)):
-            x[i][j] = solver.IntVar(0, 1, 'x[%d][%d]' % (i, j))
+            x[i][j] = solver.IntVar(0, 1.0, 'x[%d][%d]' % (i, j))
 
     # Constraints on one to one matching
     for j in range(0, len(zips)):
@@ -104,6 +105,7 @@ def assign_optimal(race_dist, applicant_df, housing_df):
     for i in range(0, len(applicant_df)):
         for j in range(0, len(zips)):
             objective.SetCoefficient(x[i][j], 1)
+    objective.SetMaximization()
 
     status = solver.Solve()
 
@@ -113,7 +115,8 @@ def assign_optimal(race_dist, applicant_df, housing_df):
         total_count = 0
         for i, row in applicant_df.iterrows():
             for j in range(0, len(zips)):
-                if int(x[i][j].solution_value()) == 1:
+                # print(x[i][j].solution_value())
+                if int(x[i][j].solution_value()) == 1.0:
                     total_count += 1
         print(total_count, len(housing_df), total_count / len(housing_df))
     else:
