@@ -10,13 +10,14 @@ from math import radians, cos, sin, asin, sqrt, floor
 # Set up file locations
 applicant_data = "applicant.csv"
 housing_data = "housing.csv"
+results_file = "results.csv"
 housing_distribution_data = "housing_distribution.csv"
 zipcode_file = "17zp21md.xlsx"
 
 num_applicants = 5626
 num_houses = 2926
 
-num_runs = 1
+num_iterations = 5
 
 used_zipcodes = []
 
@@ -141,8 +142,10 @@ def assign_optimal(race_dist, applicant_df, housing_df):
                 if int(x[i][j].solution_value()) == 1.0:
                     total_count += 1
         print(total_count, len(housing_df), total_count / len(housing_df))
+        return [total_count, len(housing_df), total_count / len(housing_df)]
     else:
         print('oop.')
+        return ["ERROR","ERROR","ERROR"]
 
 
 '''
@@ -293,20 +296,30 @@ def haversine(lon1, lat1, lon2, lat2):
 
 if __name__ == '__main__':
 
-    
+    with open(results_file, 'w', newline='') as resultsfile:
 
-    for i in range(num_runs):
-        used_zipcodes = []
+        resultswriter = csv.writer(resultsfile, delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
+        resultswriter.writerow(['Iteration','Applicants Assigned','Number Houses Available','Percent Allocated'])
 
-        generate_applicant_data()
-        generate_housing_data()
+        for i in range(num_iterations):
+            used_zipcodes = []
 
-        if i != 0:
-            location_matrix = create_adjacency_matrix()
-        
+            generate_applicant_data()
+            generate_housing_data()
 
-        applicant_df = pd.read_csv(applicant_data)
-        housing_df = pd.read_csv(housing_data)
-        race_distribution = {"Black": 37.04, "Hispanic": 15.69, "White": 43.28, "Other": 3.55}
+            if i != 0:
+                location_matrix = create_adjacency_matrix()
+            
 
-        assign_optimal(race_distribution, applicant_df, housing_df)
+            applicant_df = pd.read_csv(applicant_data)
+            housing_df = pd.read_csv(housing_data)
+            race_distribution = {"Black": 37.04, "Hispanic": 15.69, "White": 43.28, "Other": 3.55}
+
+            output_list = [i]
+            for output in assign_optimal(race_distribution, applicant_df, housing_df):
+                output_list.append(output)
+
+            resultswriter.writerow(output_list)
+
+            resultsfile.flush()
+
