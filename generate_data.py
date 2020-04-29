@@ -10,8 +10,8 @@ housing_data = "housing.csv"
 housing_distribution_data = "housing_distribution.csv"
 zipcode_file = "17zp21md.xlsx"
 
-num_applicants = 5626
-num_houses = 2926
+num_applicants = 562 # 5626
+num_houses = 292 # 2926
 
 used_zipcodes = []
 
