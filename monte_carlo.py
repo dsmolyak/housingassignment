@@ -148,6 +148,100 @@ def assign_optimal(race_dist, applicant_df, housing_df):
         return ["ERROR","ERROR","ERROR"]
 
 
+def assign_optimal_by_unit(race_dist, applicant_df, housing_df):
+    zips = list(set(housing_df['Zip Code']))
+    race_limit_map = {}  # find restrictions on how many of each race can be in a zip (proxy for block for now)
+    for zip in zips:
+        race_limit_map[zip] = {}
+        total = len(housing_df[housing_df['Zip Code'] == zip])
+        for race, percent in race_dist.items():
+            limit = round(percent / 100 * total) + 1
+            race_limit_map[zip][race] = limit
+
+    disability_limit_map = {}  # find restrictions on how many people with disabilities can be in a zip
+    for zip in zips:
+        disability_limit_map[zip] = len(housing_df[(housing_df['Zip Code'] == zip) &
+                                                   (housing_df['Disability Friendly'] == 'Yes')])
+
+    solver = pywraplp.Solver('mip_program', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
+    x = {}
+    n = len(applicant_df)
+    m = len(housing_df)
+    for i in range(0, n):
+        x[i] = {}
+        for j in range(0, m):
+            x[i][j] = solver.IntVar(0, 1.0, 'x[%d][%d]' % (i, j))
+
+    # Constraints on one to one matching
+    for j in range(0, m):
+        constraint = solver.RowConstraint(0, 1.0, '')
+        for i in range(0, n):
+            constraint.SetCoefficient(x[i][j], 1.0)
+    for i in range(0, n):
+        constraint = solver.RowConstraint(0, 1.0, '')
+        for j in range(0, m):
+            constraint.SetCoefficient(x[i][j], 1.0)
+
+    # Constraints on race
+    race_indices = {}
+    for index, row in applicant_df.iterrows():
+        if row['Race'] not in race_indices:
+            race_indices[row['Race']] = []
+        race_indices[row['Race']].append(index)  # Find which indices correspond to each race
+    zip_indices = {}
+    for index, row in housing_df.iterrows():
+        if row['Zip Code'] not in zip_indices:
+            zip_indices[row['Zip Code']] = []
+        zip_indices[row['Zip Code']].append(index)  # Find which indices correspond to each zip
+    print(len(zips))
+    for zip in zips:
+        print(zip)
+        for race, limit in race_limit_map[zip].items():
+            constraint = solver.RowConstraint(0, int(limit), '')
+            for i in range(0, n):
+                for j in range(0, m):
+                    if i in race_indices[race] and j in zip_indices[zip]:
+                        constraint.SetCoefficient(x[i][j], 1)  # Only include indices corresponding to current race/zip
+                    else:
+                        constraint.SetCoefficient(x[i][j], 0)
+
+    # # Constraints on disability
+    # disability_indices = {}
+    # for index, row in applicant_df.iterrows():
+    #     if row['Disability'] == 'Yes':
+    #         disability_indices[index] = 1
+    # constraint = solver.RowConstraint(len(disability_indices), len(disability_indices), '')
+    # print(len(disability_indices))
+    # for j in range(0, m):
+    #     for i in range(0, n):
+    #         if i in disability_indices:
+    #             constraint.SetCoefficient(x[i][j], 1)
+    #         else:
+    #             constraint.SetCoefficient(x[i][j], 0)
+
+    # Set objective (create utility matrix)
+    objective = solver.Objective()
+    for i in range(0, n):
+        for j in range(0, m):
+            objective.SetCoefficient(x[i][j], 1)
+    objective.SetMaximization()
+
+    status = solver.Solve()
+
+    result = {}
+    if status == pywraplp.Solver.OPTIMAL:
+        print('Problem solved in %f milliseconds' % solver.wall_time())
+        print()
+        total_count = 0
+        for i, row in applicant_df.iterrows():
+            for j in range(0, m):
+                if int(x[i][j].solution_value()) == 1.0:
+                    total_count += 1
+                    result[i] = j
+    else:
+        return None
+
+
 '''
 Data Generation
 '''
