@@ -10,10 +10,10 @@ housing_data = "housing.csv"
 housing_distribution_data = "housing_distribution.csv"
 zipcode_file = "17zp21md.xlsx"
 
-num_applicants = 562 # 5626
-num_houses = 292 # 2926
-
 used_zipcodes = []
+
+num_applicants = 562 #5626
+num_houses = 292 #2926
 
 def percent_return(dict):
     val_sum = sum(dict.values())
@@ -22,7 +22,7 @@ def percent_return(dict):
 
 
 
-def generate_applicant_data():
+def generate_applicant_data(num_applicants):
     global used_zipcodes
 
     # Applicant Distributions
@@ -66,7 +66,7 @@ def generate_applicant_data():
 
             applicantfile.flush()
 
-def generate_housing_data():
+def generate_housing_data(num_houses):
     global used_zipcodes
 
     # Housing Distributions
@@ -167,8 +167,8 @@ def haversine(lon1, lat1, lon2, lat2):
 
 def main():
 
-    generate_applicant_data()
-    generate_housing_data()
+    generate_applicant_data(num_applicants)
+    generate_housing_data(num_houses)
     create_adjacency_matrix()
   
 
