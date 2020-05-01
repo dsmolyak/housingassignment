@@ -17,7 +17,7 @@ if __name__ == '__main__':
 
     with open(results_file, 'w', newline='') as resultsfile:
 
-        resultswriter = csv.writer(resultsfile, delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
+        resultswriter = csv.writer(resultsfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
         resultswriter.writerow(['Iteration','Total Applicants Assigned','Total # Houses','# Blacks', '# Hispanics','# Whites', '# Others','% Blacks', '% Hispanics','% Whites', '% Others'])
 
         for i in range(num_iterations):
@@ -26,8 +26,7 @@ if __name__ == '__main__':
             gd.generate_housing_data(num_houses)
 
             if i != 0:
-                location_matrix = create_adjacency_matrix()
-            
+                location_matrix = gd.create_adjacency_matrix()
 
             applicant_df = pd.read_csv(applicant_data)
             housing_df = pd.read_csv(housing_data)
@@ -48,7 +47,7 @@ if __name__ == '__main__':
             
             i = 4
             for race in csv_race_distribution.keys():
-                output_list.append(output_list[-i] / csv_race_distribution[race])
+                output_list.append(optimal_by_unit_output[-i] / csv_race_distribution[race])
                 i -= 1
 
             resultswriter.writerow(output_list)

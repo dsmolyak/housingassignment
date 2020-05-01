@@ -15,7 +15,7 @@ def compile_stats(applicant_df, housing_df, total_assignments, race_assignments,
     print(disability_assignments)
 
 
-def assign_random(race_dist, applicant_df, housing_df):
+def assign_lottery(race_dist, applicant_df, housing_df):
     start = time.time()
     zips = set(housing_df['Zip Code'])
     race_limit_map = {} # find restrictions on how many of each race can be in a zip (proxy for block for now)
@@ -60,10 +60,8 @@ def assign_optimal_by_zip(race_dist, applicant_df, housing_df):
     for zip in zips:
         race_limit_map[zip] = {}
         total = len(housing_df[housing_df['Zip Code'] == zip])
-        print('Total', total)
         for race, percent in race_dist.items():
             limit = round(percent / 100.0 * total)
-            print(limit)
             race_limit_map[zip][race] = limit
 
     disability_limit_map = {}  # find restrictions on how many people with disabilities can be in a zip
@@ -185,9 +183,7 @@ def assign_optimal_by_unit(race_dist, applicant_df, housing_df):
         if row['Zip Code'] not in zip_indices:
             zip_indices[row['Zip Code']] = []
         zip_indices[row['Zip Code']].append(index)  # Find which indices correspond to each zip
-    print(len(zips))
     for zip in zips:
-        print(zip)
         for race, limit in race_limit_map[zip].items():
             constraint = solver.RowConstraint(0, int(limit), '')
             for i in range(0, n):
@@ -197,19 +193,18 @@ def assign_optimal_by_unit(race_dist, applicant_df, housing_df):
                     else:
                         constraint.SetCoefficient(x[i][j], 0)
 
-    # # Constraints on disability
-    # disability_indices = {}
-    # for index, row in applicant_df.iterrows():
-    #     if row['Disability'] == 'Yes':
-    #         disability_indices[index] = 1
-    # constraint = solver.RowConstraint(len(disability_indices), len(disability_indices), '')
-    # print(len(disability_indices))
-    # for j in range(0, m):
-    #     for i in range(0, n):
-    #         if i in disability_indices:
-    #             constraint.SetCoefficient(x[i][j], 1)
-    #         else:
-    #             constraint.SetCoefficient(x[i][j], 0)
+    # Constraints on disability
+    disability_indices = {}
+    for index, row in applicant_df.iterrows():
+        if row['Disability'] == 'Yes':
+            disability_indices[index] = 1
+    constraint = solver.RowConstraint(len(disability_indices), len(disability_indices), '')
+    for j in range(0, m):
+        for i in range(0, n):
+            if i in disability_indices:
+                constraint.SetCoefficient(x[i][j], 1)
+            else:
+                constraint.SetCoefficient(x[i][j], 0)
 
     # Set objective (create utility matrix)
     objective = solver.Objective()
@@ -228,10 +223,8 @@ def assign_optimal_by_unit(race_dist, applicant_df, housing_df):
         total_count = 0
         for i, row in applicant_df.iterrows():
             for j in range(0, m):
-                # print(x[i][j].solution_value())
                 if int(x[i][j].solution_value()) == 1.0:
                     total_count += 1
-
                     for key in race_totals.keys():
                         if i in race_indices[key]:
                             race_totals[key] += 1
@@ -245,13 +238,3 @@ def assign_optimal_by_unit(race_dist, applicant_df, housing_df):
     else:
         print('oop.')
         return []
-
-
-if __name__ == '__main__':
-    applicant_df = pd.read_csv('applicant.csv')
-    housing_df = pd.read_csv('housing.csv')
-    race_distribution = {"Black": 37.04, "Hispanic": 15.69, "White": 43.28, "Other": 3.55}
-    # race_distribution = {"Black": 38.04, "Hispanic": 16.69, "White": 44.28, "Other": 4.55}
-
-    # assign_optimal_by_zip(race_distribution, applicant_df, housing_df)
-    assign_optimal_by_unit(race_distribution, applicant_df, housing_df)
