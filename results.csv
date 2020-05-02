@@ -1,2 +1,2 @@
-Iteration,Total Applicants Assigned,Total # Houses,# Blacks,# Hispanics,# Whites,# Others,% Blacks,% Hispanics,% Whites,% Others
-1,292,292,104,44,129,15,0.49523809523809526,0.5238095238095238,0.5119047619047619,0.9375
+Iteration,Total Applicants Assigned,Total # Houses,Disabiled Applicants Assigned, % Disabiled Applicants Assigned,# Blacks,# Hispanics,# Whites,# Others,% Blacks,% Hispanics,% Whites,% Others
+1,292,292,69,1.0,92,55,126,19,0.431924882629108,0.7236842105263158,0.49606299212598426,1.0
