@@ -1,6 +1,6 @@
-import pandas as pd
 import time
 from ortools.linear_solver import pywraplp
+import numpy as np
 
 
 def compile_stats(applicant_df, housing_df, total_assignments, race_assignments, disability_assignments):
@@ -64,11 +64,6 @@ def assign_optimal_by_zip(race_dist, applicant_df, housing_df):
             limit = round(percent / 100.0 * total)
             race_limit_map[zip][race] = limit
 
-    disability_limit_map = {}  # find restrictions on how many people with disabilities can be in a zip
-    for zip in zips:
-        disability_limit_map[zip] = len(housing_df[(housing_df['Zip Code'] == zip) &
-                                                   (housing_df['Disability Friendly'] == 'Yes')])
-
     solver = pywraplp.Solver('mip_program', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
     x = {}
     for i in range(0, len(applicant_df)):
@@ -131,7 +126,7 @@ def assign_optimal_by_zip(race_dist, applicant_df, housing_df):
         print('oop.')
 
 
-def assign_optimal_by_unit(race_dist, applicant_df, housing_df):
+def assign_optimal_by_unit(race_dist, applicant_df, housing_df, location_matrix):
     zips = list(set(housing_df['Zip Code']))
     race_limit_map = {}  # find restrictions on how many of each race can be in a zip (proxy for block for now)
     for zip in zips:
@@ -200,9 +195,17 @@ def assign_optimal_by_unit(race_dist, applicant_df, housing_df):
 
     # Set objective (create utility matrix)
     objective = solver.Objective()
-    for i in range(0, n):
+    variance = 1
+    for i, row_a in applicant_df.iterrows():
+        samples = []
+        for j, row_h in housing_df.iterrows():
+            distance = location_matrix[row_a['Zip Code']][row_h['Zip Code']]
+            distance = 1.0 if distance == 0 else distance
+            sample = np.random.normal(1.0 / distance, variance)
+            samples.append(sample)
+        norm = [float(i) / sum(samples) for i in samples]
         for j in range(0, m):
-            objective.SetCoefficient(x[i][j], 1)
+            objective.SetCoefficient(x[i][j], norm[j])
     objective.SetMaximization()
 
     status = solver.Solve()
@@ -222,7 +225,7 @@ def assign_optimal_by_unit(race_dist, applicant_df, housing_df):
                         if i in race_indices[key]:
                             race_totals[key] += 1
 
-                    if i in disability_indices and disability_indices[i] == 1:
+                    if i in disability_indices:
                         disability_totals += 1
 
         output_list = [total_count, len(housing_df), disability_totals]

@@ -25,8 +25,8 @@ if __name__ == '__main__':
             gd.generate_applicant_data(num_applicants)
             gd.generate_housing_data(num_houses)
 
-            if i != 0:
-                location_matrix = gd.create_adjacency_matrix()
+            # if i != 0:
+            location_matrix = gd.create_adjacency_matrix()
 
             applicant_df = pd.read_csv(applicant_data)
             housing_df = pd.read_csv(housing_data)
@@ -45,7 +45,7 @@ if __name__ == '__main__':
 
             output_list = [i + 1]
 
-            optimal_by_unit_output = ah.assign_optimal_by_unit(race_distribution, applicant_df, housing_df)
+            optimal_by_unit_output = ah.assign_optimal_by_unit(race_distribution, applicant_df, housing_df, location_matrix)
             for i in range(len(optimal_by_unit_output)):
                 output_list.append(optimal_by_unit_output[i])
 
