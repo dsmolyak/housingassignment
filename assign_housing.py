@@ -193,6 +193,8 @@ def assign_optimal_by_unit(race_dist, applicant_df, housing_df, location_matrix)
         for i in disability_indices:
             constraint.SetCoefficient(x[i][j], 1)
 
+
+    distance_utility = 0
     # Set objective (create utility matrix)
     objective = solver.Objective()
     variance = 1
@@ -206,6 +208,7 @@ def assign_optimal_by_unit(race_dist, applicant_df, housing_df, location_matrix)
         norm = [float(i) / sum(samples) for i in samples]
         for j in range(0, m):
             objective.SetCoefficient(x[i][j], norm[j])
+            distance_utility += norm[j]
     objective.SetMaximization()
 
     status = solver.Solve()
@@ -228,7 +231,7 @@ def assign_optimal_by_unit(race_dist, applicant_df, housing_df, location_matrix)
                     if i in disability_indices:
                         disability_totals += 1
 
-        output_list = [total_count, len(housing_df), disability_totals]
+        output_list = [total_count, len(housing_df), disability_totals, distance_utility]
 
         for key in race_totals.keys():
             output_list.append(race_totals[key])

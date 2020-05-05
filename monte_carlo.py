@@ -11,14 +11,14 @@ results_file = "results.csv"
 num_applicants = 562
 num_houses = 292
 
-num_iterations = 1
+num_iterations = 2
 
 if __name__ == '__main__':
 
     with open(results_file, 'w', newline='') as resultsfile:
 
         resultswriter = csv.writer(resultsfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
-        resultswriter.writerow(['Iteration','Total Applicants Assigned', 'Total # Houses','Disabiled Applicants Assigned',' % Disabiled Applicants Assigned','# Blacks', '# Hispanics','# Whites', '# Others','% Blacks', '% Hispanics','% Whites', '% Others'])
+        resultswriter.writerow(['Iteration','Total Applicants Assigned', 'Total # Houses','Disabiled Applicants Assigned', '% Disabiled Applicants Assigned','Distance Utility','# Blacks', '# Hispanics','# Whites', '# Others','% Blacks', '% Hispanics','% Whites', '% Others'])
 
         for i in range(num_iterations):
 
