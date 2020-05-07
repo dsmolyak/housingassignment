@@ -45,7 +45,8 @@ if __name__ == '__main__':
 
             output_list = [i + 1]
 
-            optimal_by_unit_output = ah.assign_optimal_by_unit(race_distribution, applicant_df, housing_df, location_matrix)
+            optimal_by_unit_output = ah.assign_optimal_by_unit(applicant_df, housing_df, location_matrix,
+                                                               race_distribution, True)
             for i in range(len(optimal_by_unit_output)):
                 output_list.append(optimal_by_unit_output[i])
 
