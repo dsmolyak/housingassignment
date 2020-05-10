@@ -145,7 +145,6 @@ def create_adjacency_matrix():
 
             matrix[i][j] = haversine(data1['lng'], data1['lat'], data2['lng'], data2['lat'])
 
-    print(matrix)
     return matrix
 
 

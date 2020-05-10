@@ -1,5 +1,5 @@
 import time
-from ortools.linear_solver import pywraplp
+from ortools.linear_solver import pywraplp  # https://developers.google.com/optimization/mip/mip_var_array
 import numpy as np
 
 
@@ -199,16 +199,17 @@ def assign_optimal_by_unit(applicant_df, housing_df, location_matrix, race_dist,
         for j in dis_fr_indices:
             for i in disability_indices:
                 constraint.SetCoefficient(x[i][j], 1)
-
     # Set objective (create utility matrix)
     variance = 1
     distance_utilities = []
     for i, row_a in applicant_df.iterrows():
         samples = []
-        for j, row_h in housing_df.iterrows():
+        for j, row_h in housing_df.iterrows():  # This loop takes ~20 seconds due to pandas
             distance = location_matrix[row_a['Zip Code']][row_h['Zip Code']]
             distance = 1.0 if distance == 0 else distance
-            sample = np.random.normal(1.0 / distance, variance)
+            sample = max(0, np.random.normal(1.0 / distance, variance))
+            if row_a['Disability'] == 'Yes' and row_h['Disability Friendly'] == 'Yes':
+                sample *= np.random.f(5, 10)  # F distribution, df=5,10
             samples.append(sample)
         norm_utils = [float(i) / sum(samples) for i in samples]
         distance_utilities.append(norm_utils)
@@ -233,10 +234,11 @@ def assign_optimal_by_unit(applicant_df, housing_df, location_matrix, race_dist,
             for j in range(0, m):
                 if int(x[i][j].solution_value()) == 1.0:
                     total_count += 1
-                    for key in race_totals.keys():
-                        if i in race_indices[key]:
-                            race_totals[key] += 1
-                    if i in disability_indices:
+                    if race_dist:
+                        for key in race_totals.keys():
+                            if i in race_indices[key]:
+                                race_totals[key] += 1
+                    if disability and i in disability_indices:
                         disability_totals += 1
                     distance_utility += distance_utilities[i][j]
 
