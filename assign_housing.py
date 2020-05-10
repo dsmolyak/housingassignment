@@ -148,6 +148,12 @@ def assign_optimal_by_unit(applicant_df, housing_df, location_matrix, race_dist,
 
     # Constraints on race
     race_indices = {}
+
+    for index, row in applicant_df.iterrows():
+        if row['Race'] not in race_indices:
+            race_indices[row['Race']] = []
+        race_indices[row['Race']].append(index)  # Find which indices correspond to each race
+
     if race_dist:
         # find restrictions on how many of each race can be in a zip
         zips = list(set(housing_df['Zip Code']))
@@ -159,10 +165,6 @@ def assign_optimal_by_unit(applicant_df, housing_df, location_matrix, race_dist,
                 limit = round(percent / 100 * total) + 1
                 race_limit_map[zip][race] = limit
 
-        for index, row in applicant_df.iterrows():
-            if row['Race'] not in race_indices:
-                race_indices[row['Race']] = []
-            race_indices[row['Race']].append(index)  # Find which indices correspond to each race
         zip_indices = {}
         for index, row in housing_df.iterrows():
             if row['Zip Code'] not in zip_indices:
@@ -177,10 +179,12 @@ def assign_optimal_by_unit(applicant_df, housing_df, location_matrix, race_dist,
 
     # Constraints on disability
     disability_indices = []
+
+    for index, row in applicant_df.iterrows():
+        if row['Disability'] == 'Yes':
+            disability_indices.append(index)
+
     if disability:
-        for index, row in applicant_df.iterrows():
-            if row['Disability'] == 'Yes':
-                disability_indices.append(index)
         constraint = solver.RowConstraint(len(disability_indices), len(disability_indices), '')
         for j in range(0, m):
             for i in disability_indices:

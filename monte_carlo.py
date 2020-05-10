@@ -6,60 +6,71 @@ import csv
 # Set up file locations
 applicant_data = "applicant.csv"
 housing_data = "housing.csv"
-results_file = "results.csv"
+experiments_file = "experiments.csv"
+results_folder = "results"
 
-num_applicants = 562
-num_houses = 292
 
-num_iterations = 2
+
 
 if __name__ == '__main__':
 
-    with open(results_file, 'w', newline='') as resultsfile:
 
-        resultswriter = csv.writer(resultsfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
-        resultswriter.writerow(['Iteration','Total Applicants Assigned', 'Total # Houses','Disabiled Applicants Assigned', '% Disabiled Applicants Assigned','Distance Utility','# Blacks', '# Hispanics','# Whites', '# Others','% Blacks', '% Hispanics','% Whites', '% Others'])
+    experiments_df = pd.read_csv(experiments_file)
 
-        for i in range(num_iterations):
+    for experimentindex, experimentrow in experiments_df.iterrows():
 
-            gd.generate_applicant_data(num_applicants)
-            gd.generate_housing_data(num_houses)
+        
 
-            # if i != 0:
-            location_matrix = gd.create_adjacency_matrix()
+        with open(results_folder + "/" + experimentrow['Name'] + ".csv", 'w', newline='') as resultsfile:
 
-            applicant_df = pd.read_csv(applicant_data)
-            housing_df = pd.read_csv(housing_data)
-            race_distribution = {"Black": 37.04, "Hispanic": 15.69, "White": 43.28, "Other": 3.55}
+            resultswriter = csv.writer(resultsfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
+            resultswriter.writerow(['Iteration','Total Applicants Assigned', 'Total # Houses','Disabiled Applicants Assigned', '% Disabiled Applicants Assigned','Distance Utility','# Blacks', '# Hispanics','# Whites', '# Others','% Blacks', '% Hispanics','% Whites', '% Others'])
 
-            csv_race_distribution = {"Black": 0, "Hispanic": 0, "White": 0, "Other": 0}
-            csv_total_disabled = 0
-            # Calculate applicant race distribution and disability from csv
-            for index, row in applicant_df.iterrows():
-                csv_race_distribution[row['Race']] += 1
+            for i in range(experimentrow['Iterations']):
+                
 
-                if row['Disability'] == 'Yes':
-                    csv_total_disabled += 1
+                gd.generate_applicant_data(int(experimentrow['NumApplicants']))
+                gd.generate_housing_data(int(experimentrow['NumHouses']))
 
-            print(csv_race_distribution)
+                # if i != 0:
+                location_matrix = gd.create_adjacency_matrix()
 
-            output_list = [i + 1]
+                applicant_df = pd.read_csv(applicant_data)
+                housing_df = pd.read_csv(housing_data)
 
-            optimal_by_unit_output = ah.assign_optimal_by_unit(applicant_df, housing_df, location_matrix,
-                                                               race_distribution, True)
-            for i in range(len(optimal_by_unit_output)):
-                output_list.append(optimal_by_unit_output[i])
+                if experimentrow['RaceDistribution'] == 'Yes':
+                    race_distribution = {"Black": float(experimentrow['Black']), "Hispanic": float(experimentrow['Hispanic']), "White": float(experimentrow['White']), "Other": float(experimentrow['Other'])}
+                else:
+                    race_distribution = {}
 
-                # Append disabled %
-                if i == 2:
-                    output_list.append(optimal_by_unit_output[i] / csv_total_disabled)
-            
-            i = 4
-            for race in csv_race_distribution.keys():
-                output_list.append(optimal_by_unit_output[-i] / csv_race_distribution[race])
-                i -= 1
+                csv_race_distribution = {"Black": 0, "Hispanic": 0, "White": 0, "Other": 0}
+                csv_total_disabled = 0
+                # Calculate applicant race distribution and disability from csv
+                for index, row in applicant_df.iterrows():
+                    csv_race_distribution[row['Race']] += 1
 
-            resultswriter.writerow(output_list)
+                    if row['Disability'] == 'Yes':
+                        csv_total_disabled += 1
 
-            resultsfile.flush()
+                print(csv_race_distribution)
+
+                output_list = [i + 1]
+
+                optimal_by_unit_output = ah.assign_optimal_by_unit(applicant_df, housing_df, location_matrix,
+                                                                race_distribution, experimentrow['Disability'] == 'Yes')
+                for i in range(len(optimal_by_unit_output)):
+                    output_list.append(optimal_by_unit_output[i])
+
+                    # Append disabled %
+                    if i == 2:
+                        output_list.append(optimal_by_unit_output[i] / csv_total_disabled)
+                
+                i = 4
+                for race in csv_race_distribution.keys():
+                    output_list.append(optimal_by_unit_output[-i] / csv_race_distribution[race])
+                    i -= 1
+
+                resultswriter.writerow(output_list)
+
+                resultsfile.flush()
 
