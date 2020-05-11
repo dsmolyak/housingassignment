@@ -202,22 +202,43 @@ def assign_optimal_by_unit(applicant_df, housing_df, location_matrix, race_dist,
     # Set objective (create utility matrix)
     variance = 1
     distance_utilities = []
-    for i, row_a in applicant_df.iterrows():
+    applicant_zips = list(applicant_df['Zip Code'])
+    housing_zips = list(housing_df['Zip Code'])
+    for i in range(0, n):
         samples = []
-        for j, row_h in housing_df.iterrows():  # This loop takes ~20 seconds due to pandas
-            distance = location_matrix[row_a['Zip Code']][row_h['Zip Code']]
+        for j in range(0, m):  # This loop takes ~20 seconds due to pandas
+            distance = location_matrix[applicant_zips[i]][housing_zips[j]]
             distance = 1.0 if distance == 0 else distance
             sample = max(0, np.random.normal(1.0 / distance, variance))
-            if row_a['Disability'] == 'Yes' and row_h['Disability Friendly'] == 'Yes':
-                sample *= np.random.f(5, 10)  # F distribution, df=5,10
             samples.append(sample)
         norm_utils = [float(i) / sum(samples) for i in samples]
         distance_utilities.append(norm_utils)
 
+    disability_utilities = []
+    disability_list = list(applicant_df['Disability'])
+    dis_fr_list = list(housing_df['Disability Friendly'])
+    num_matches = len(housing_df[housing_df['Disability Friendly'] == 'Yes']) * \
+                  len(applicant_df[applicant_df['Disability'] == 'Yes'])
+    f_samples = np.random.f(5, 10, num_matches)
+    count = 0
+    for i in range(0, n):
+        utils = []
+        for j in range(0, m):
+            if disability_list[i] == 'Yes' and dis_fr_list[j] == 'Yes':
+                utils.append(f_samples[count] + 1)
+                count += 1
+            else:
+                utils.append(1)
+        disability_utilities.append(utils)
+
+    disability_utilities = np.asarray(disability_utilities)
+    distance_utilities = np.asarray(distance_utilities)
+    final_utilities = disability_utilities * distance_utilities
+
     objective = solver.Objective()
     for i, row_a in applicant_df.iterrows():
         for j, row_h in housing_df.iterrows():
-            objective.SetCoefficient(x[i][j], distance_utilities[i][j])
+            objective.SetCoefficient(x[i][j], final_utilities[i][j])
     objective.SetMaximization()
 
     status = solver.Solve()
