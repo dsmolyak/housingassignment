@@ -245,6 +245,7 @@ def assign_optimal_by_unit(applicant_df, housing_df, location_matrix, race_dist,
 
     race_totals = {"Black": 0, "Hispanic": 0, "White": 0, "Other": 0}
     disability_totals = 0
+    disability_utility = 0
     distance_utility = 0
 
     if status == pywraplp.Solver.OPTIMAL:
@@ -255,15 +256,18 @@ def assign_optimal_by_unit(applicant_df, housing_df, location_matrix, race_dist,
             for j in range(0, m):
                 if int(x[i][j].solution_value()) == 1.0:
                     total_count += 1
-                    if race_dist:
-                        for key in race_totals.keys():
-                            if i in race_indices[key]:
-                                race_totals[key] += 1
-                    if disability and i in disability_indices:
+                    for key in race_totals.keys():
+                        if i in race_indices[key]:
+                            race_totals[key] += 1
+                            
+                    if i in disability_indices:
                         disability_totals += 1
-                    distance_utility += distance_utilities[i][j]
 
-        output_list = [total_count, len(housing_df), disability_totals, distance_utility]
+                    disability_utility += disability_utilities[i][j]
+                    distance_utility += distance_utilities[i][j]
+                    
+
+        output_list = [total_count, len(housing_df), disability_totals, disability_utility, distance_utility]
 
         for key in race_totals.keys():
             output_list.append(race_totals[key])
