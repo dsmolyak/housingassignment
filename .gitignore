@@ -1,2 +1,2 @@
-*.csv
-/results
+results/
+generated_data/

@@ -5,15 +5,15 @@ import xlrd
 from math import radians, cos, sin, asin, sqrt, floor
 
 # Set up file locations
-applicant_data = "applicant.csv"
-housing_data = "housing.csv"
-housing_distribution_data = "housing_distribution.csv"
+applicant_data = "generated_data/applicant.csv"
+housing_data = "generated_data/housing.csv"
+housing_distribution_data = "generated_data/housing_distribution.csv"
 zipcode_file = "17zp21md.xlsx"
 
 used_zipcodes = []
 
-num_applicants = 562 #5626
-num_houses = 292 #2926
+num_applicants = 562  # 5626
+num_houses = 292  # 2926
 
 def percent_return(dict):
     val_sum = sum(dict.values())

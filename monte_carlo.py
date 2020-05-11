@@ -4,8 +4,8 @@ import pandas as pd
 import csv
 
 # Set up file locations
-applicant_data = "applicant.csv"
-housing_data = "housing.csv"
+applicant_data = "generated_data/applicant.csv"
+housing_data = "generated_data/housing.csv"
 experiments_file = "experiments.csv"
 results_folder = "results"
 

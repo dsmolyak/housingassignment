@@ -259,7 +259,6 @@ def assign_optimal_by_unit(applicant_df, housing_df, location_matrix, race_dist,
                     for key in race_totals.keys():
                         if i in race_indices[key]:
                             race_totals[key] += 1
-                            
                     if i in disability_indices:
                         disability_totals += 1
 
