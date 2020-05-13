@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import csv
+import pandas as pd
+import os
 
 results_folder = "results"
 graph_folder = "graphs"
@@ -7,16 +9,16 @@ graph_folder = "graphs"
 x = []
 y = []
 
-with open(results_folder + "/" + "control.csv",'r') as csvfile:
-    csvreader = csv.reader(csvfile, delimiter=',')
-    next(csvreader, None) #skip headers
-    for row in csvreader:
-        x.append(int(row[0]))
-        y.append(float(row[5]))
 
-plt.plot(x,y, label='Disability Utility')
-plt.xlabel('Iteration')
+for file in os.listdir(results_folder):
+    results_df = pd.read_csv(results_folder + "/" + file)
+
+    x.append(file)
+    y.append(results_df['Disability-Utility'].mean())
+
+plt.bar(x,y, label='Disability Utility')
+plt.xlabel('Experiment')
 plt.ylabel('Disability Utility')
 plt.title('Disability Utility')
 plt.legend()
-plt.savefig(graph_folder + "/" + "control.png")
+plt.savefig(graph_folder + "/" + "disability-utility.png")

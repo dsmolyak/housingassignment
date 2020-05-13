@@ -24,7 +24,7 @@ if __name__ == '__main__':
         with open(results_folder + "/" + experimentrow['Name'] + ".csv", 'w', newline='') as resultsfile:
 
             resultswriter = csv.writer(resultsfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
-            resultswriter.writerow(['Iteration','Total Applicants Assigned', 'Total # Houses','Disabiled Applicants Assigned', '% Disabiled Applicants Assigned','Disability Utility','Distance Utility','# Blacks', '# Hispanics','# Whites', '# Others','% Blacks', '% Hispanics','% Whites', '% Others'])
+            resultswriter.writerow(['Iteration','Total-Applicants-Assigned', 'Total-#-Houses','Disabiled-Applicants-Assigned', '%-Disabiled-Applicants-Assigned','Disability-Utility','Distance-Utility','#-Blacks', '#-Hispanics','#-Whites', '#-Others','%-Blacks', '%-Hispanics','%-Whites', '%-Others'])
 
             for i in range(experimentrow['Iterations']):
                 
