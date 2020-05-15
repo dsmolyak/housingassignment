@@ -3,18 +3,6 @@ from ortools.linear_solver import pywraplp  # https://developers.google.com/opti
 import numpy as np
 
 
-def compile_stats(applicant_df, housing_df, total_assignments, race_assignments, disability_assignments):
-    print('%d/%d, %f' % (total_assignments, len(housing_df), total_assignments / len(housing_df) * 100))
-    print(race_assignments)
-    race_percents = {}
-    for race, num in race_assignments.items():
-        race_percents[race] = num / len(applicant_df[applicant_df['Race'] == race])
-    print(race_percents)
-    num_dis_applicants = len(applicant_df[applicant_df['Disability'] == 'Yes'])
-    print('%d/%d, %f' % (disability_assignments, num_dis_applicants, disability_assignments / num_dis_applicants * 100))
-    print(disability_assignments)
-
-
 def find_race_limits(race_dist, housing_df):
     zips = set(housing_df['Zip Code'])
     race_limit_map = {}
@@ -65,7 +53,38 @@ def calc_disability_utilities(applicant_df, housing_df):
     return disability_utilities
 
 
+def compile_stats(x, disability_utilities, distance_utilities, applicant_df, m):
+    race_totals = {"Black": 0, "Hispanic": 0, "White": 0, "Other": 0}
+    disability_totals = 0
+    disability_utility = 0
+    distance_utility = 0
+    total_count = 0
+
+    race_list = list(applicant_df['Race'])
+    disability_list = list(applicant_df['Disability'])
+    for i in range(0, len(applicant_df)):
+        for j in range(0, m):
+            if x[i][j] == 1.0:
+                total_count += 1
+                race_totals[race_list[i]] += 1
+                if disability_list[i] == 'Yes':
+                    disability_totals += 1
+
+                disability_utility += disability_utilities[i][j]
+                distance_utility += distance_utilities[i][j]
+
+    output_list = [total_count, m, disability_totals, disability_utility, distance_utility]
+
+    for key in race_totals.keys():
+        output_list.append(race_totals[key])
+
+    return output_list
+
+
 def assign_lottery(applicant_df, housing_df, location_matrix, race_dist, disability):
+    if disability:
+        applicant_df = applicant_df.sort_values(by=['Disability'], ascending=False)
+
     zips = set(housing_df['Zip Code'])
     race_limit_map = find_race_limits(race_dist, housing_df)
 
@@ -77,30 +96,28 @@ def assign_lottery(applicant_df, housing_df, location_matrix, race_dist, disabil
     variance = 1
     distance_utilities = calc_distance_utilities(applicant_df, housing_df, location_matrix, variance)
     disability_utilities = calc_disability_utilities(applicant_df, housing_df)
+    final_utilities = np.asarray(disability_utilities) * np.asarray(distance_utilities)
 
-    # for i in range(0, len(applicant_df)):
-
-    total_assignments = 0
-    race_assignments = {}
-    disability_assignments = 0
-    for index, row in applicant_df.iterrows():
-        race = row['Race']
-        disability = row['Disability']
-        zip_code = row['Zip Code']
-
-        if race_limit_map[zip_code][race] > 0:
-            if disability == 'Yes' and disability_limit_map[zip_code] > 0:
-                disability_limit_map[zip_code] -= 1
-                disability_assignments += 1
-            elif disability == 'Yes':
+    x = np.zeros((len(applicant_df), len(housing_df)))
+    assigned = {}
+    disability_list = list(applicant_df['Disability'])
+    dis_fr_list = list(housing_df['Disability Friendly'])
+    race_list = list(applicant_df['Race'])
+    zip_list = list(housing_df['Zip Code'])
+    for i in range(0, len(applicant_df)):
+        ordered_preferences = np.argsort(final_utilities[i])[::-1]
+        for j in ordered_preferences:
+            if j in assigned:
                 continue
-            race_limit_map[zip_code][race] -= 1
-            if race not in race_assignments:
-                race_assignments[race] = 0
-            race_assignments[race] += 1
-            total_assignments += 1
+            elif disability and disability_list[i] == 'No' and dis_fr_list[j] == 'Yes':
+                continue
+            elif race_limit_map[zip_list[j]][race_list[i]] > 0:
+                assigned[j] = True
+                x[i][j] = 1.0
+                race_limit_map[zip_list[j]][race_list[i]] -= 1
+                break
 
-    compile_stats(applicant_df, housing_df, total_assignments, race_assignments, disability_assignments)
+    return compile_stats(x, disability_utilities, distance_utilities, applicant_df, len(housing_df))
 
 
 def assign_optimal_by_zip(race_dist, applicant_df, housing_df):
@@ -167,7 +184,6 @@ def assign_optimal_by_zip(race_dist, applicant_df, housing_df):
         total_count = 0
         for i, row in applicant_df.iterrows():
             for j in range(0, len(zips)):
-                # print(x[i][j].solution_value())
                 if int(x[i][j].solution_value()) == 1.0:
                     total_count += 1
         print(total_count, len(housing_df), total_count / len(housing_df))
@@ -258,34 +274,15 @@ def assign_optimal_by_unit(applicant_df, housing_df, location_matrix, race_dist,
 
     status = solver.Solve()
 
-    race_totals = {"Black": 0, "Hispanic": 0, "White": 0, "Other": 0}
-    disability_totals = 0
-    disability_utility = 0
-    distance_utility = 0
-
     if status == pywraplp.Solver.OPTIMAL:
         print('Problem solved in %f milliseconds' % solver.wall_time())
         print()
-        total_count = 0
-        for i, row in applicant_df.iterrows():
+        x_ = np.zeros((n, m))
+        for i in range(0, n):
             for j in range(0, m):
-                if int(x[i][j].solution_value()) == 1.0:
-                    total_count += 1
-                    for key in race_totals.keys():
-                        if i in race_indices[key]:
-                            race_totals[key] += 1
-                    if i in disability_indices:
-                        disability_totals += 1
+                x_[i][j] = x[i][j].solution_value()
 
-                    disability_utility += disability_utilities[i][j]
-                    distance_utility += distance_utilities[i][j]
-
-        output_list = [total_count, len(housing_df), disability_totals, disability_utility, distance_utility]
-
-        for key in race_totals.keys():
-            output_list.append(race_totals[key])
-
-        return output_list
+        return compile_stats(x_, disability_utilities, distance_utilities, applicant_df, m)
     else:
         print('oop.')
         return []
