@@ -56,8 +56,14 @@ if __name__ == '__main__':
 
                 output_list = [i + 1]
 
+                lottery_output = ah.assign_lottery(applicant_df, housing_df, location_matrix, race_distribution,
+                                                   experimentrow['Disability'] == 'Yes')
+
+                print(lottery_output)
                 optimal_by_unit_output = ah.assign_optimal_by_unit(applicant_df, housing_df, location_matrix,
-                                                                race_distribution, experimentrow['Disability'] == 'Yes')
+                                                                   race_distribution, experimentrow['Disability'] == 'Yes')
+                print(optimal_by_unit_output)
+
                 for i in range(len(optimal_by_unit_output)):
                     output_list.append(optimal_by_unit_output[i])
 
