@@ -113,7 +113,7 @@ def assign_optimal_by_zip(race_dist, applicant_df, housing_df):
     status = solver.Solve()
 
     if status == pywraplp.Solver.OPTIMAL:
-        print('Problem solved in %f milliseconds' % solver.wall_time())
+        print('Problem solved in %f milliseconds' % solver.wall_time(), flush=True)
         print()
         total_count = 0
         for i, row in applicant_df.iterrows():
@@ -249,7 +249,7 @@ def assign_optimal_by_unit(applicant_df, housing_df, location_matrix, race_dist,
     distance_utility = 0
 
     if status == pywraplp.Solver.OPTIMAL:
-        print('Problem solved in %f milliseconds' % solver.wall_time())
+        print('Problem solved in %f milliseconds' % solver.wall_time(), flush=True)
         print()
         total_count = 0
         for i, row in applicant_df.iterrows():

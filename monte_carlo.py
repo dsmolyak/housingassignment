@@ -32,8 +32,8 @@ if __name__ == '__main__':
                 gd.generate_applicant_data(int(experimentrow['NumApplicants']))
                 gd.generate_housing_data(int(experimentrow['NumHouses']))
 
-                # if i != 0:
-                location_matrix = gd.create_adjacency_matrix()
+                if i == 0:
+                    location_matrix = gd.create_adjacency_matrix()
 
                 applicant_df = pd.read_csv(applicant_data)
                 housing_df = pd.read_csv(housing_data)
