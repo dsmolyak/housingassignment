@@ -1,5 +1,8 @@
 import matplotlib.pyplot as plt
 import csv
+import os
+import pandas as pd
+import numpy as np
 
 results_folder = "results"
 graph_folder = "graphs"

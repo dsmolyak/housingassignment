@@ -56,27 +56,29 @@ if __name__ == '__main__':
 
                 output_list = [i + 1]
 
-                lottery_output = ah.assign_lottery(applicant_df, housing_df, location_matrix, race_distribution,
-                                                   experimentrow['Disability'] == 'Yes')
+                #lottery_output = ah.assign_lottery(applicant_df, housing_df, location_matrix, race_distribution,
+                #                                   experimentrow['Disability'] == 'Yes')
 
-                print(lottery_output)
+                #print(lottery_output)
                 optimal_by_unit_output = ah.assign_optimal_by_unit(applicant_df, housing_df, location_matrix,
                                                                    race_distribution, experimentrow['Disability'] == 'Yes')
                 print(optimal_by_unit_output)
 
-                for i in range(len(optimal_by_unit_output)):
-                    output_list.append(optimal_by_unit_output[i])
+                for j in range(len(optimal_by_unit_output)):
+                    output_list.append(optimal_by_unit_output[j])
 
                     # Append disabled %
-                    if i == 2:
-                        output_list.append(optimal_by_unit_output[i] / csv_total_disabled)
+                    if j == 2:
+                        output_list.append(optimal_by_unit_output[j] / csv_total_disabled)
                 
-                i = 4
+                j = 4
                 for race in csv_race_distribution.keys():
-                    output_list.append(optimal_by_unit_output[-i] / csv_race_distribution[race])
-                    i -= 1
+                    output_list.append(optimal_by_unit_output[-j] / csv_race_distribution[race])
+                    j -= 1
 
                 resultswriter.writerow(output_list)
 
                 resultsfile.flush()
+
+                print(experimentrow['Name'],i,flush=True)
 
