@@ -84,8 +84,11 @@ def assign_lottery(applicant_df, housing_df, location_matrix, race_dist, disabil
     if disability:
         applicant_df = applicant_df.sort_values(by=['Disability'], ascending=False)
 
+    race_limit_map = {}
+    if race_dist:
+        race_limit_map = find_race_limits(race_dist, housing_df)
+
     zips = set(housing_df['Zip Code'])
-    race_limit_map = find_race_limits(race_dist, housing_df)
 
     disability_limit_map = {}  # find restrictions on how many people with disabilities can be in a zip
     for zip_code in zips:
@@ -110,7 +113,9 @@ def assign_lottery(applicant_df, housing_df, location_matrix, race_dist, disabil
                 continue
             elif disability and disability_list[i] == 'No' and dis_fr_list[j] == 'Yes':
                 continue
-            elif race_limit_map[zip_list[j]][race_list[i]] > 0:
+            elif race_dist and race_limit_map[zip_list[j]][race_list[i]] <= 0:
+                continue
+            else:
                 assigned[j] = True
                 x[i][j] = 1.0
                 race_limit_map[zip_list[j]][race_list[i]] -= 1
