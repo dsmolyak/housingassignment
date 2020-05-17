@@ -9,7 +9,22 @@ housing_data = "generated_data/housing.csv"
 experiments_file = "experiments.csv"
 results_folder = "results"
 
+def retrieve_output(output, csv_total_disabled, csv_race_distribution):
+    output_list = [i + 1]
 
+    for j in range(len(output)):
+        output_list.append(output[j])
+
+        # Append disabled %
+        if j == 2:
+            output_list.append(output[j] / csv_total_disabled)
+    
+    j = 4
+    for race in csv_race_distribution.keys():
+        output_list.append(output[-j] / csv_race_distribution[race])
+        j -= 1
+
+    return output_list
 
 
 if __name__ == '__main__':
@@ -21,10 +36,14 @@ if __name__ == '__main__':
 
         
 
-        with open(results_folder + "/" + experimentrow['Name'] + ".csv", 'w', newline='') as resultsfile:
+        with open(results_folder + "/" + experimentrow['Name'] + ".csv", 'w', newline='') as resultsfile, open(results_folder + "/lottery-" + experimentrow['Name'] + ".csv", 'w', newline='') as lotteryfile:
 
             resultswriter = csv.writer(resultsfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
             resultswriter.writerow(['Iteration','Total-Applicants-Assigned', 'Total-#-Houses','Disabiled-Applicants-Assigned', '%-Disabiled-Applicants-Assigned','Disability-Utility','Distance-Utility','#-Blacks', '#-Hispanics','#-Whites', '#-Others','%-Blacks', '%-Hispanics','%-Whites', '%-Others'])
+
+            lotterywriter = csv.writer(lotteryfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
+            lotterywriter.writerow(['Iteration','Total-Applicants-Assigned', 'Total-#-Houses','Disabiled-Applicants-Assigned', '%-Disabiled-Applicants-Assigned','Disability-Utility','Distance-Utility','#-Blacks', '#-Hispanics','#-Whites', '#-Others','%-Blacks', '%-Hispanics','%-Whites', '%-Others'])
+
 
             for i in range(experimentrow['Iterations']):
                 
@@ -54,27 +73,24 @@ if __name__ == '__main__':
 
                 print(csv_race_distribution)
 
-                output_list = [i + 1]
 
-                #lottery_output = ah.assign_lottery(applicant_df, housing_df, location_matrix, race_distribution,
-                #                                   experimentrow['Disability'] == 'Yes')
+                lottery_output = ah.assign_lottery(applicant_df, housing_df, location_matrix, race_distribution,
+                                                   experimentrow['Disability'] == 'Yes')
 
-                #print(lottery_output)
+                print(lottery_output)
+
+                output_list = retrieve_output(lottery_output, csv_total_disabled, csv_race_distribution)
+
+                lotterywriter.writerow(output_list)
+
+                lotteryfile.flush()
+
+
                 optimal_by_unit_output = ah.assign_optimal_by_unit(applicant_df, housing_df, location_matrix,
                                                                    race_distribution, experimentrow['Disability'] == 'Yes')
                 print(optimal_by_unit_output)
 
-                for j in range(len(optimal_by_unit_output)):
-                    output_list.append(optimal_by_unit_output[j])
-
-                    # Append disabled %
-                    if j == 2:
-                        output_list.append(optimal_by_unit_output[j] / csv_total_disabled)
-                
-                j = 4
-                for race in csv_race_distribution.keys():
-                    output_list.append(optimal_by_unit_output[-j] / csv_race_distribution[race])
-                    j -= 1
+                output_list = retrieve_output(optimal_by_unit_output, csv_total_disabled, csv_race_distribution)
 
                 resultswriter.writerow(output_list)
 
