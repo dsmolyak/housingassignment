@@ -118,7 +118,8 @@ def assign_lottery(applicant_df, housing_df, location_matrix, race_dist, disabil
             else:
                 assigned[j] = True
                 x[i][j] = 1.0
-                race_limit_map[zip_list[j]][race_list[i]] -= 1
+                if race_dist:
+                    race_limit_map[zip_list[j]][race_list[i]] -= 1
                 break
 
     return compile_stats(x, disability_utilities, distance_utilities, applicant_df, len(housing_df))
