@@ -1,5 +1,5 @@
 Number,Name,NumApplicants,NumHouses,Black,Hispanic,White,Other,RaceDistribution,Disability,Iterations
-1,control,562,292,37.04,15.69,43.28,3.55,Yes,Yes,100
+1,constraints,562,292,37.04,15.69,43.28,3.55,Yes,Yes,100
 2,nodisability,562,292,37.04,15.69,43.28,3.55,Yes,No,100
 3,norace,562,292,37.04,15.69,43.28,3.55,No,Yes,100
 4,nothing,562,292,37.04,15.69,43.28,3.55,No,No,100

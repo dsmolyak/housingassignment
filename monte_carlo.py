@@ -2,12 +2,26 @@ import assign_housing as ah
 import generate_data as gd
 import pandas as pd
 import csv
+import statistics
 
 # Set up file locations
 applicant_data = "generated_data/applicant.csv"
 housing_data = "generated_data/housing.csv"
 experiments_file = "experiments.csv"
 results_folder = "results"
+
+
+def calculate_stats_matrix(location_matrix):
+    first_key = list(location_matrix.keys())[0]
+
+    values = location_matrix[first_key].values()
+
+    print("Mean:", statistics.mean(values))
+    print("Median:", statistics.median(values))
+    print("Standard Deviation:", statistics.stdev(values))
+    print("Variance:", statistics.variance(values))
+    print("Min:", min(values))
+    print("Max:", max(values))
 
 def retrieve_output(output, csv_total_disabled, csv_race_distribution):
     output_list = [i + 1]
@@ -34,7 +48,7 @@ if __name__ == '__main__':
 
     for experimentindex, experimentrow in experiments_df.iterrows():
 
-        
+        print(experimentrow)
 
         with open(results_folder + "/" + experimentrow['Name'] + ".csv", 'w', newline='') as resultsfile, open(results_folder + "/lottery-" + experimentrow['Name'] + ".csv", 'w', newline='') as lotteryfile:
 
@@ -44,7 +58,7 @@ if __name__ == '__main__':
             lotterywriter = csv.writer(lotteryfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
             lotterywriter.writerow(['Iteration','Total-Applicants-Assigned', 'Total-#-Houses','Disabiled-Applicants-Assigned', '%-Disabiled-Applicants-Assigned','Disability-Utility','Distance-Utility','#-Blacks', '#-Hispanics','#-Whites', '#-Others','%-Blacks', '%-Hispanics','%-Whites', '%-Others'])
 
-
+            print(experimentrow['Iterations'])
             for i in range(experimentrow['Iterations']):
                 
 
@@ -53,6 +67,7 @@ if __name__ == '__main__':
 
                 if i == 0:
                     location_matrix = gd.create_adjacency_matrix()
+                    calculate_stats_matrix(location_matrix)
 
                 applicant_df = pd.read_csv(applicant_data)
                 housing_df = pd.read_csv(housing_data)
@@ -97,4 +112,5 @@ if __name__ == '__main__':
                 resultsfile.flush()
 
                 print(experimentrow['Name'],i,flush=True)
+
 

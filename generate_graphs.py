@@ -9,37 +9,43 @@ graph_folder = "graphs"
 
 def utility():
     x = []
-    disability_utility = []
-    distance_utility = []
+    utility = []
+    lottery_utility = []
     width = 0.3
 
-    for file in os.listdir(results_folder):
-        results_df = pd.read_csv(results_folder + "/" + file)
+    file_names = ["constraints","nodisability","norace","nothing"]
+
+    for file in file_names:
+        results_df = pd.read_csv(results_folder + "/" + file + ".csv")
 
         x.append(file)
-        disability_utility.append(results_df['Disability-Utility'].mean())
-        distance_utility.append(results_df['Distance-Utility'].mean())
+        utility.append(results_df['Disability-Utility'].mean())
+
+    for file in file_names:
+        results_df = pd.read_csv(results_folder + "/lottery-" + file + ".csv")    
+
+        lottery_utility.append(results_df['Disability-Utility'].mean())
 
     plt.clf()
-    plt.bar(np.arange(len(x)),disability_utility, label='Disability Utility',width=width)
-    plt.bar(np.arange(len(x)) + width,distance_utility, label='Distance Utility',width=width)
-    plt.xlabel('Experiment')
+    plt.bar(np.arange(len(x)),utility, label='Optimal Utility',width=width)
+    plt.bar(np.arange(len(x)) + width,lottery_utility, label='Lottery Utility',width=width)
+    plt.xlabel('Experiment Type')
     plt.xticks(np.arange(len(x)),x)
     plt.ylabel('Average Utility')
     plt.title('Utility')
-    plt.legend()
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=5)
     plt.savefig(graph_folder + "/" + "utility.png")
 
 def disability_percentage_comparisons():
     x = []
     disability_percent = []
 
-    on_df = pd.read_csv(results_folder + "/control.csv")
-    x.append("ON")
+    on_df = pd.read_csv(results_folder + "/constraints.csv")
+    x.append("With Constraints")
     disability_percent.append(on_df['%-Disabiled-Applicants-Assigned'].mean())
 
     off_df = pd.read_csv(results_folder + "/nothing.csv")
-    x.append("OFF")
+    x.append("Without Constraints")
     disability_percent.append(off_df['%-Disabiled-Applicants-Assigned'].mean())
 
     plt.clf()
@@ -48,7 +54,6 @@ def disability_percentage_comparisons():
     plt.xticks(np.arange(len(x)),x)
     plt.ylabel('Percent Assigned')
     plt.title('Percent Applicants with Disabilities Assigned')
-    plt.legend()
     plt.savefig(graph_folder + "/" + "percent_disabled.png") 
 
 def race_percentage_comparisons():
@@ -57,7 +62,7 @@ def race_percentage_comparisons():
     race_off_percent = []
     races = ['Blacks','Hispanics','Whites','Others']
 
-    on_df = pd.read_csv(results_folder + "/control.csv")
+    on_df = pd.read_csv(results_folder + "/constraints.csv")
 
     for race in races:
         x.append(race)
@@ -71,13 +76,13 @@ def race_percentage_comparisons():
     width = 0.3
 
     plt.clf()
-    plt.bar(np.arange(len(x)),race_on_percent, label='ON',width=width)
-    plt.bar(np.arange(len(x)) + width,race_off_percent, label='OFF',width=width)
+    plt.bar(np.arange(len(x)),race_on_percent, label='With Constraints',width=width)
+    plt.bar(np.arange(len(x)) + width,race_off_percent, label='Without Constraints',width=width)
     plt.xlabel('Races')
     plt.xticks(np.arange(len(x)),x)
     plt.ylabel('Percent Assigned')
     plt.title('Percent Assigned by Race Distribution')
-    plt.legend()
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=5)
     plt.savefig(graph_folder + "/" + "percent_race.png") 
 
 
